@@ -1,0 +1,12 @@
+version: "3"
+services:
+  fast-api:
+    build: .
+    restart: always
+    tty: true
+    ports:
+      - 8002:80
+    volumes:
+      - .:/app:ro
+    environment:
+      - WEB_CONCURRENCY=1
