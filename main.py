@@ -1,7 +1,14 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-app = FastAPI()
+if os.environ.get("PYTHON_ENV") == "production":
+    root_path = "/ws"
+else:
+    root_path = ""
+
+app = FastAPI(root_path=root_path)
 
 
 @app.get("/")
