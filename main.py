@@ -1,15 +1,16 @@
 from __future__ import annotations
+from typing import cast, Dict
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 from lib.event import EventHandler
-from lib.websocket import WebSocketHandler
 
-handler_dict: dict[str, WebSocketHandler] = {}
+connection_dict: Dict[str, WebSocket] = {}
 
 ws_event = {
     "connect": EventHandler(),
+    "message": cast(Dict[str, EventHandler], {}),
     "disconnect": EventHandler(),
 }
 
@@ -62,28 +63,32 @@ async def websocket_endpoint(websocket: WebSocket):
 
     # クライアントを識別するためのIDを取得
     key = websocket.headers.get('sec-websocket-key')
-    handler_dict[key] = WebSocketHandler(websocket)
+    connection_dict[key] = websocket
+    ws_event["message"][key] = EventHandler()
 
-    ws_event["connect"].fire(handler_dict[key])
+    ws_event["connect"].fire(key, websocket)
 
     try:
         while True:
             data = await websocket.receive_json()
-            handler_dict[key].fire(data)
+            ws_event["message"][key].fire(data)
     except WebSocketDisconnect:
-        if handler_dict[key]:
-            ws_event["disconnect"].fire(handler_dict[key])
-            del handler_dict[key]
-            await websocket.close()
+        if ws_event["message"][key]:
+            del ws_event["message"][key]
+        if connection_dict[key]:
+            del connection_dict[key]
+
+        await websocket.close()
+        ws_event["disconnect"].fire(key)
 
 
-def on_connect_websocket(handler, websocket_handler: WebSocketHandler):
+def on_connect_websocket(handler, key: str, websocket: WebSocket):
     async def listener(handler, data):
         print(data)
-        await handler.send_json({"value": f"res-{data['value']}"})
+        await connection_dict[key].send_json({"value": f"res-{data['value']}"})
         print("send end")
 
-    websocket_handler.add_listener(listener)
+    ws_event["message"][key].add_listener(listener)
 
 
 ws_event["connect"].add_listener(on_connect_websocket)
