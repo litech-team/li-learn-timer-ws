@@ -1,18 +1,22 @@
 from __future__ import annotations
-from typing import cast, Dict
+from dataclasses import dataclass, field
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 from lib.event import EventHandler
 
-connection_dict: Dict[str, WebSocket] = {}
+connection_dict: dict[str, WebSocket] = {}
 
-ws_event = {
-    "connect": EventHandler(),
-    "message": cast(Dict[str, EventHandler], {}),
-    "disconnect": EventHandler(),
-}
+
+@dataclass
+class Events:
+    connect = EventHandler()
+    message: dict[str, EventHandler] = field(default_factory=dict)
+    disconnect = EventHandler()
+
+
+events = Events()
 
 app = FastAPI()
 
@@ -64,22 +68,22 @@ async def websocket_endpoint(websocket: WebSocket):
     # クライアントを識別するためのIDを取得
     key = websocket.headers.get('sec-websocket-key')
     connection_dict[key] = websocket
-    ws_event["message"][key] = EventHandler()
+    events.message[key] = EventHandler()
 
-    ws_event["connect"].fire(key, websocket)
+    events.connect.fire(key, websocket)
 
     try:
         while True:
             data = await websocket.receive_json()
-            ws_event["message"][key].fire(data)
+            events.message[key].fire(data)
     except WebSocketDisconnect:
-        if ws_event["message"][key]:
-            del ws_event["message"][key]
+        if events.message[key]:
+            del events.message[key]
         if connection_dict[key]:
             del connection_dict[key]
 
         await websocket.close()
-        ws_event["disconnect"].fire(key)
+        events.disconnect.fire(key)
 
 
 def on_connect_websocket(handler, key: str, websocket: WebSocket):
@@ -88,7 +92,7 @@ def on_connect_websocket(handler, key: str, websocket: WebSocket):
         await connection_dict[key].send_json({"value": f"res-{data['value']}"})
         print("send end")
 
-    ws_event["message"][key].add_listener(listener)
+    events.message[key].add_listener(listener)
 
 
-ws_event["connect"].add_listener(on_connect_websocket)
+events.connect.add_listener(on_connect_websocket)
