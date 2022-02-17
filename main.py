@@ -3,9 +3,15 @@ from __future__ import annotations
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
+from lib.event import EventHandler
 from lib.websocket import WebSocketHandler
 
 handler_dict: dict[str, WebSocketHandler] = {}
+
+ws_event = {
+    "connect": EventHandler(),
+    "disconnect": EventHandler(),
+}
 
 app = FastAPI()
 
@@ -58,12 +64,7 @@ async def websocket_endpoint(websocket: WebSocket):
     key = websocket.headers.get('sec-websocket-key')
     handler_dict[key] = WebSocketHandler(websocket)
 
-    async def fnc(handler, data):
-        print(data)
-        await handler.send_json({"value": f"res-{data['value']}"})
-        print("send end")
-
-    handler_dict[key].add_listener(fnc)
+    ws_event["connect"].fire(handler_dict[key])
 
     try:
         while True:
@@ -71,5 +72,18 @@ async def websocket_endpoint(websocket: WebSocket):
             handler_dict[key].fire(data)
     except WebSocketDisconnect:
         if handler_dict[key]:
+            ws_event["disconnect"].fire(handler_dict[key])
             del handler_dict[key]
             await websocket.close()
+
+
+def on_connect_websocket(handler, websocket_handler: WebSocketHandler):
+    async def listener(handler, data):
+        print(data)
+        await handler.send_json({"value": f"res-{data['value']}"})
+        print("send end")
+
+    websocket_handler.add_listener(listener)
+
+
+ws_event["connect"].add_listener(on_connect_websocket)
