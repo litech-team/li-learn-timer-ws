@@ -37,7 +37,8 @@ html = r"""
         <script>
             var ws = new WebSocket("ws://localhost:8000/ws");
             ws.onmessage = function(event) {
-                var { value } = JSON.parse(event.data)
+                var data = JSON.parse(event.data)
+                var text = data.props?.text ?? "successful!"
                 var messages = document.getElementById('messages')
                 var message = document.createElement('li')
                 var content = document.createTextNode(value)
@@ -84,7 +85,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def on_message(key, data):
     print(data)
-    await connection_dict[key].send_json({"value": f"res-{data['value']}"})
+    result = {"type": "ack", "props": { "text": "The reception was successful!"}}
+    await connection_dict[key].send_json(result)
     print("send end")
 
 events.message.add_listener(on_message)
