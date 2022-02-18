@@ -86,8 +86,8 @@ async def websocket_endpoint(websocket: WebSocket):
         events.disconnect.fire(key)
 
 
-def on_connect_websocket(handler, key: str, websocket: WebSocket):
-    async def listener(handler, data):
+def on_connect_websocket(key: str, websocket: WebSocket):
+    async def listener(data):
         print(data)
         await connection_dict[key].send_json({"value": f"res-{data['value']}"})
         print("send end")

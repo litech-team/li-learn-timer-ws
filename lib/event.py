@@ -15,6 +15,6 @@ class EventHandler:
     def fire(self, *args):
         for listener in self.listeners:
             if (asyncio.iscoroutinefunction(listener)):
-                asyncio.ensure_future(listener(self, *args))
+                asyncio.ensure_future(listener(*args))
             else:
-                listener(self, *args)
+                listener(*args)
