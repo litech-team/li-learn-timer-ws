@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -11,9 +11,9 @@ connection_dict: dict[str, WebSocket] = {}
 
 @dataclass
 class Events:
+    message = EventHandler()
     connect = EventHandler()
-    message: dict[str, EventHandler] = field(default_factory=dict)
-    disconnect = EventHandler()
+    close = EventHandler()
 
 
 events = Events()
@@ -68,31 +68,23 @@ async def websocket_endpoint(websocket: WebSocket):
     # クライアントを識別するためのIDを取得
     key = websocket.headers.get('sec-websocket-key')
     connection_dict[key] = websocket
-    events.message[key] = EventHandler()
 
     events.connect.fire(key, websocket)
 
     try:
         while True:
             data = await websocket.receive_json()
-            events.message[key].fire(data)
+            events.message.fire(key, data)
     except WebSocketDisconnect:
-        if events.message[key]:
-            del events.message[key]
         if connection_dict[key]:
             del connection_dict[key]
 
         await websocket.close()
-        events.disconnect.fire(key)
+        events.close.fire(key)
 
+async def on_message(key, data):
+    print(data)
+    await connection_dict[key].send_json({"value": f"res-{data['value']}"})
+    print("send end")
 
-def on_connect_websocket(key: str, websocket: WebSocket):
-    async def listener(data):
-        print(data)
-        await connection_dict[key].send_json({"value": f"res-{data['value']}"})
-        print("send end")
-
-    events.message[key].add_listener(listener)
-
-
-events.connect.add_listener(on_connect_websocket)
+events.message.add_listener(on_message)
