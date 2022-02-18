@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+import json
 
 from websockets import client as websockets
 
@@ -42,8 +43,9 @@ class WebSocket:
 
         asyncio.ensure_future(self.eventloop())
 
-    async def send(self, message):
+    async def send(self, data):
         if self.ws:
+            message = json.dumps(data)
             await self.ws.send(message)
 
     async def close(self):
@@ -67,7 +69,8 @@ class WebSocket:
             while self.ws:
                 try:
                     message = await self.ws.recv()
-                    self.events.message.fire(message)
+                    data = json.loads(message)
+                    self.events.message.fire(data)
                 except:
                     self.events.close.fire()
                     self.ws = None
