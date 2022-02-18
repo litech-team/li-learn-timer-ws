@@ -28,9 +28,9 @@ class EventHandler:
 
 @dataclass
 class WebSocketEvents:
-    on_message = EventHandler()
-    on_connect = EventHandler()
-    on_close = EventHandler()
+    message = EventHandler()
+    connect = EventHandler()
+    close = EventHandler()
 
 
 class WebSocket:
@@ -60,25 +60,25 @@ class WebSocket:
             while not self.ws:
                 try:
                     self.ws = await websockets.connect(self.url)
-                    self.events.on_connect.fire()
+                    self.events.connect.fire()
                 except:
                     await asyncio.sleep(0.5)
 
             while self.ws:
                 try:
                     message = await self.ws.recv()
-                    self.events.on_message.fire(message)
+                    self.events.message.fire(message)
                 except:
-                    self.events.on_close.fire()
+                    self.events.close.fire()
                     self.ws = None
 
     def listen_events(self, *, on_message, on_connect, on_close):
         if on_message:
-            self.events.on_message.add_listener(on_message)
+            self.events.message.add_listener(on_message)
         if on_connect:
-            self.events.on_connect.add_listener(on_connect)
+            self.events.connect.add_listener(on_connect)
         if on_close:
-            self.events.on_close.add_listener(on_close)
+            self.events.close.add_listener(on_close)
 
     def wait_end(self):
         loop = asyncio.get_event_loop()
