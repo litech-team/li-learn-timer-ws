@@ -65,10 +65,14 @@ async def ws_raspberry_pi(websocket: WebSocket):
         await websocket.close()
         events.close.fire(key)
 
+
 async def on_message(key, data):
     print(data)
-    result = {"type": "ack", "props": { "text": "The reception was successful!"}}
-    await connection_dict[key].send_json(result)
-    print("send end")
+
+    if data["name"] != "ack":
+        await connection_dict[key].send_json({
+            "type": "ack",
+            "props": {"text": "The reception was successful!"}
+        })
 
 events.message.add_listener(on_message)
