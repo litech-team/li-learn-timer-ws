@@ -70,6 +70,6 @@ async def on_message(key, data):
     print(data)
 
     if data["name"] != "ack":
-        await connection_dict[key].send_json({"type": "ack"})
+        await connection_dict[key].send_json({"name": "ack"})
 
 events.message.add_listener(on_message)
