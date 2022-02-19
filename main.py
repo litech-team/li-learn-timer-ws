@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import json
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -24,6 +25,23 @@ app = FastAPI()
 @app.get("/")
 async def get():
     return HTMLResponse(r"<h1>Hello World</h1>")
+
+
+@app.get("/send")
+async def send_endpoind(name: str, props: str = ""):
+    if props:
+        try:
+            _props = json.loads(props)
+        except:
+            _props = None
+    else:
+        _props = None
+
+    for (key, connection) in connection_dict.items():
+        if _props:
+            await connection.send({"name": name, "props": _props})
+        else:
+            await connection.send_json({"name": name})
 
 
 @app.websocket("/raspberry-pi")
