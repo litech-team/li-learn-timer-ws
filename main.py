@@ -26,8 +26,8 @@ async def get():
     return HTMLResponse(r"<h1>Hello World</h1>")
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/raspberry-pi")
+async def ws_raspberry_pi(websocket: WebSocket):
     await websocket.accept()
 
     # クライアントを識別するためのIDを取得
