@@ -1,11 +1,20 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import json
+import os
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 from lib.event import EventHandler
+
+
+if os.environ.get("PYTHON_ENV") == "production":
+    root_path = "/li-learn-timer/ws"
+else:
+    root_path = ""
+
+app = FastAPI(root_path=root_path)
 
 connection_dict: dict[str, WebSocket] = {}
 
@@ -18,8 +27,6 @@ class Events:
 
 
 events = Events()
-
-app = FastAPI()
 
 
 @app.get("/")
