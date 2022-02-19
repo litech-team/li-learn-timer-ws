@@ -39,7 +39,7 @@ async def send_endpoind(name: str, props: str = ""):
 
     for (key, connection) in connection_dict.items():
         if _props:
-            await connection.send({"name": name, "props": _props})
+            await connection.send_json({"name": name, "props": _props})
         else:
             await connection.send_json({"name": name})
 
