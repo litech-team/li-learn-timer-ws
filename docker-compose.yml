@@ -9,4 +9,5 @@ services:
     volumes:
       - .:/app:ro
     environment:
+      - PYTHON_ENV=$PYTHON_ENV
       - WEB_CONCURRENCY=1
