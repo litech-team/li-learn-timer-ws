@@ -5,6 +5,20 @@ from datetime import datetime
 
 from lib.event import EventHandler
 
+from fastapi import WebSocket
+
+
+@dataclass
+class PiWebSocket:
+    ws: WebSocket
+    pi_id: str | None = None
+
+    async def send(self, name: str, props: dict = None):
+        if props:
+            await self.ws.send_json({"name": name, "props": props})
+        else:
+            await self.ws.send_json({"name": name})
+
 @dataclass
 class MainEvents:
     message = EventHandler()

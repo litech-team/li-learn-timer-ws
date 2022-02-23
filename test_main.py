@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from lib.database import PiState, state_dict
 from main import app
 
 def test_ws_raspberry_pi_1():

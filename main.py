@@ -6,8 +6,8 @@ import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
-from lib.dataclass import MainEvents
-from lib.database import PiState, connection_dict, connection_pi_id_dict, state_dict
+from lib.dataclass import MainEvents, PiWebSocket
+from lib.database import PiState, connection_dict, state_dict
 
 if os.environ.get("PYTHON_ENV") == "production":
     root_path = "/li-learn-timer/ws"
@@ -36,9 +36,9 @@ async def send_endpoind(name: str, props: str = ""):
 
     for (key, connection) in connection_dict.items():
         if _props:
-            await connection.send_json({"name": name, "props": _props})
+            await connection.send(name, _props)
         else:
-            await connection.send_json({"name": name})
+            await connection.send(name)
 
 
 @app.websocket("/raspberry-pi")
@@ -47,7 +47,7 @@ async def ws_raspberry_pi(websocket: WebSocket):
 
     # クライアントを識別するためのIDを取得
     key = websocket.headers.get('sec-websocket-key')
-    connection_dict[key] = websocket
+    connection_dict[key] = PiWebSocket(ws=websocket)
 
     events.connect.fire(key, websocket)
 
@@ -70,7 +70,7 @@ async def on_message(key, data: dict):
     props: dict = data.get("props", {})
 
     if name != "ack":
-        await connection_dict[key].send_json({"name": "ack"})
+        await connection_dict[key].send("ack")
 
     if name == "send_pi_id":
         if not(pi_id := props.get("pi_id")):
