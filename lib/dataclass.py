@@ -33,6 +33,7 @@ class PiWebSocket:
         else:
             await self.ws.send_json({"name": name})
 
+
 @dataclass
 class MainEvents:
     message = EventHandler()

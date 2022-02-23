@@ -9,8 +9,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from lib.dataclass import MainEvents, PiWebSocket, ServerSocket
-from lib.database import PiState, connection_dict, state_dict
+from lib.dataclass import PiState, MainEvents, PiWebSocket, ServerSocket
+from lib.database import connection_dict, state_dict
 
 if os.environ.get("PYTHON_ENV") == "production":
     root_path = "/li-learn-timer/ws"
@@ -33,7 +33,7 @@ async def get():
 
 
 @app.get("/send")
-async def send_endpoind(name: str, props: str = ""):
+async def send_endpoint(name: str, props: str = ""):
     if props:
         try:
             _props = json.loads(props)

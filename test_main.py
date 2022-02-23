@@ -5,6 +5,7 @@ from lib.database import state_dict, connection_dict
 from fastapi.testclient import TestClient
 from main import app
 
+
 @pytest.fixture(scope='function', autouse=True)
 def scope_function():
     yield
@@ -12,6 +13,7 @@ def scope_function():
         del connection_dict[key]
     for key in list(state_dict):
         del state_dict[key]
+
 
 def test_ws_raspberry_pi_1():
     client = TestClient(app)
