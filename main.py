@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import asyncio
 import json
 import os
@@ -6,8 +7,9 @@ import traceback
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
-from lib.dataclass import MainEvents, PiWebSocket
+from lib.dataclass import MainEvents, PiWebSocket, ServerSocket
 from lib.database import PiState, connection_dict, state_dict
 
 if os.environ.get("PYTHON_ENV") == "production":
@@ -18,6 +20,11 @@ else:
 app = FastAPI(root_path=root_path)
 
 events = MainEvents()
+
+if (php_server_url := os.environ.get("PHP_SERVER_URL")):
+    php_server = ServerSocket(php_server_url)
+else:
+    php_server = ServerSocket("http://localhost:8000/php_mock")
 
 
 @app.get("/")
@@ -40,6 +47,24 @@ async def send_endpoind(name: str, props: str = ""):
             await connection.send(name, _props)
         else:
             await connection.send(name)
+
+
+class PHPEndpointBody(BaseModel):
+    name: str
+    props: dict = {}
+
+
+@app.post("/local/php")
+async def php_endpoint(body: PHPEndpointBody):
+    name = body.name
+    props = body.props
+
+    await php_server.send(name, props)
+
+
+@app.post("/php_mock")
+async def php_mock_endpoint(body: PHPEndpointBody):
+    print(body)
 
 
 @app.websocket("/raspberry-pi")

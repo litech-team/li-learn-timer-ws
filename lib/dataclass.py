@@ -3,9 +3,23 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+import aiohttp
+
 from lib.event import EventHandler
 
 from fastapi import WebSocket
+
+
+@dataclass
+class ServerSocket:
+    url: str
+
+    async def send(self, name: str, props: dict = None):
+        async with aiohttp.ClientSession() as session:
+            if props:
+                await session.post(self.url, json={"name": name, "props": props})
+            else:
+                await session.post(self.url, json={"name": name})
 
 
 @dataclass
