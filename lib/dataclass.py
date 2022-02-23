@@ -22,6 +22,7 @@ class ServerSocket:
             else:
                 await session.post(self.url, json={"name": name})
 
+
 @dataclass
 class MockServerSocket:
     stack: list = field(default_factory=list)
@@ -34,13 +35,12 @@ class MockServerSocket:
 
     def receive_json(self):
         return self.stack.pop(0)
-    
+
     def mock(self, mocker: MockerFixture, target: str):
         mocker.patch(f'{target}.send', side_effect=self.send)
-    
+
     def clear(self):
         self.stack = []
-
 
 
 @dataclass
