@@ -9,7 +9,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from lib.dataclass import PiState, MainEvents, PiWebSocket, ServerSocket
+from lib.dataclass import PiState, MainEvents, PiWebSocket, ServerSocket, Task
 from lib.database import connection_dict, state_dict
 
 if os.environ.get("PYTHON_ENV") == "production":
@@ -63,6 +63,31 @@ async def php_endpoint(body: PHPEndpointBody):
 
     if name != "ack":
         await php_server.send("ack")
+
+    if name == "send_task":
+        tasks = [Task(*v) for v in props["tasks"]]
+        if (state := state_dict.get(pi_id)):
+            for task in tasks:
+                state.tasks.append(task)
+        else:
+            state = PiState(None, tasks)
+
+        if (connection_id := state.connection_id):
+            if (first_task := state.first_task):
+                await connection_dict[connection_id].send("ready_task", {"task": first_task})
+            else:
+                await connection_dict[connection_id].send("req_ready_task")
+
+    if name == "stop_task":
+        if not (state := state_dict.get(pi_id)):
+            return
+
+        state.stop_task()
+
+        if not (connection_id := state.connection_id):
+            return
+
+        await connection_dict[connection_id].send("stop_task")
 
 
 @app.post("/php_mock")

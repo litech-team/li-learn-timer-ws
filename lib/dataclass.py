@@ -103,3 +103,8 @@ class PiState:
         for task in self.tasks:
             if task.started:
                 self.tasks.remove(task)
+
+    def stop_task(self):
+        for task in self.tasks:
+            if task.started:
+                task.started = None
