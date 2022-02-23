@@ -24,7 +24,6 @@ class ServerSocket:
 
 @dataclass
 class MockServerSocket:
-    url: str
     stack: list = field(default_factory=list)
 
     async def send(self, name: str, props: dict = None):
@@ -38,6 +37,9 @@ class MockServerSocket:
     
     def mock(self, mocker: MockerFixture, target: str):
         mocker.patch(f'{target}.send', side_effect=self.send)
+    
+    def clear(self):
+        self.stack = []
 
 
 

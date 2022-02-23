@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from lib.dataclass import MockServerSocket
 from lib.database import state_dict, connection_dict
@@ -6,21 +7,22 @@ from lib.database import state_dict, connection_dict
 from fastapi.testclient import TestClient
 from main import app
 
+php_server = MockServerSocket()
+
 
 @pytest.fixture(scope='function', autouse=True)
-def scope_function():
+def scope_function(mocker: MockerFixture):
+    php_server.mock(mocker, "lib.dataclass.ServerSocket")
     yield
+    php_server.clear()
     for key in list(connection_dict):
         del connection_dict[key]
     for key in list(state_dict):
         del state_dict[key]
 
 
-def test_php_endpoint(mocker):
+def test_php_endpoint():
     client = TestClient(app)
-
-    php_server = MockServerSocket("")
-    php_server.mock(mocker, "lib.dataclass.ServerSocket")
 
     client.post("/local/php", json={
         "name": "send_tasks",
