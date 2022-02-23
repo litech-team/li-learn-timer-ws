@@ -16,3 +16,6 @@ def test_ws_raspberry_pi_1():
         assert websocket.receive_json() == {
             "name": "ack"
         }
+        assert websocket.receive_json() == {
+            "name": "req_ready_task"
+        }

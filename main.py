@@ -95,12 +95,10 @@ async def on_message(key, name: str, props: dict):
 
         # ToDo: send php connected_pi
 
-        if state.first_task:
-            pass
-            # ToDo: send pi ready_task
+        if (first_task := state.first_task):
+            await connection_dict[key].send("ready_task", {"task": first_task})
         else:
-            pass
-            # ToDo: send pi req_ready_task
+            await connection_dict[key].send("req_ready_task")
 
     if name == "req_start_task":
         if not (state := state_dict.get_from_connection_id(key)):
