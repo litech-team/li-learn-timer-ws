@@ -82,6 +82,7 @@ async def on_message(key, name: str, props: dict):
             return
 
         if state:
+            print("al")
             # すでにタスクがセットしてある場合
             state.connection_id = key
         else:
@@ -103,7 +104,7 @@ async def on_message(key, name: str, props: dict):
     if name == "req_start_task":
         if not (state := state_dict.get_from_connection_id(key)):
             return
-        elif state.first_task:
+        elif (first_task := state.first_task):
             pass
             # ToDo: send pi start_task
             # ToDo: send php started_task
