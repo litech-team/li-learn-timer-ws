@@ -1,5 +1,6 @@
 import pytest
 
+from lib.dataclass import MockServerSocket
 from lib.database import state_dict, connection_dict
 
 from fastapi.testclient import TestClient
@@ -13,6 +14,24 @@ def scope_function():
         del connection_dict[key]
     for key in list(state_dict):
         del state_dict[key]
+
+
+def test_php_endpoint(mocker):
+    client = TestClient(app)
+
+    php_server = MockServerSocket("")
+    php_server.mock(mocker, "lib.dataclass.ServerSocket")
+
+    client.post("/local/php", json={
+        "name": "send_tasks",
+        "props": {
+            "tasks": []
+        }
+    })
+
+    assert php_server.receive_json() == {
+        "name": "ack"
+    }
 
 
 def test_ws_raspberry_pi_1():

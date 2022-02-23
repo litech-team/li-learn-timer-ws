@@ -59,7 +59,9 @@ async def php_endpoint(body: PHPEndpointBody):
     name = body.name
     props = body.props
 
-    await php_server.send(name, props)
+    if name != "ack":
+        await php_server.send("ack")
+
 
 
 @app.post("/php_mock")

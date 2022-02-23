@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
+from pytest_mock.plugin import MockerFixture
 import aiohttp
 
 from lib.event import EventHandler
@@ -20,6 +21,24 @@ class ServerSocket:
                 await session.post(self.url, json={"name": name, "props": props})
             else:
                 await session.post(self.url, json={"name": name})
+
+@dataclass
+class MockServerSocket:
+    url: str
+    stack: list = field(default_factory=list)
+
+    async def send(self, name: str, props: dict = None):
+        if props:
+            self.stack.append({"name": name, "props": props})
+        else:
+            self.stack.append({"name": name})
+
+    def receive_json(self):
+        return self.stack.pop(0)
+    
+    def mock(self, mocker: MockerFixture, target: str):
+        mocker.patch(f'{target}.send', side_effect=self.send)
+
 
 
 @dataclass
