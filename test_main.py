@@ -26,6 +26,7 @@ def test_php_endpoint():
 
     client.post("/local/php", json={
         "name": "send_tasks",
+        "pi_id": "test_pi_id",
         "props": {
             "tasks": []
         }

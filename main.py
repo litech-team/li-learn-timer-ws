@@ -51,12 +51,14 @@ async def send_endpoint(name: str, props: str = ""):
 
 class PHPEndpointBody(BaseModel):
     name: str
+    pi_id: str
     props: dict = {}
 
 
 @app.post("/local/php")
 async def php_endpoint(body: PHPEndpointBody):
     name = body.name
+    pi_id = body.pi_id
     props = body.props
 
     if name != "ack":
