@@ -94,3 +94,12 @@ class PiState:
                 l.append((now - task.started).total_seconds())
 
         return max(*l)
+
+    def start_task(self, task: Task) -> Task | None:
+        task.started = datetime.now()
+        return task
+
+    def finish_task(self):
+        for task in self.tasks:
+            if task.started:
+                self.tasks.remove(task)

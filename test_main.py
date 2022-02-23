@@ -40,10 +40,12 @@ def test_ws_raspberry_pi_1():
     client = TestClient(app)
 
     with client.websocket_connect("/raspberry-pi") as websocket:
+        pi_id = "01234"
+
         websocket.send_json({
             "name": "send_pi_id",
             "props": {
-                "pi_id": "01234"
+                "pi_id": pi_id
             }
         })
         assert websocket.receive_json() == {
@@ -51,4 +53,10 @@ def test_ws_raspberry_pi_1():
         }
         assert websocket.receive_json() == {
             "name": "req_ready_task"
+        }
+        assert php_server.receive_json() == {
+            "name": "connected_pi",
+            "props": {
+                "pi_id": pi_id
+            }
         }

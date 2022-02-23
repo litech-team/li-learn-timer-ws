@@ -104,7 +104,7 @@ async def on_message(key, name: str, props: dict):
             # 実行中の場合
             state.connection_id = key
 
-            # ToDo: send php reconnected
+            await php_server.send("reconnected_pi", {"pi_id": pi_id})
             return
 
         if state:
@@ -120,23 +120,23 @@ async def on_message(key, name: str, props: dict):
 
             state_dict[pi_id] = state
 
-        # ToDo: send php connected_pi
-
         if (first_task := state.first_task):
             await connection_dict[key].send("ready_task", {"task": first_task})
         else:
             await connection_dict[key].send("req_ready_task")
 
+        await php_server.send("connected_pi", {"pi_id": pi_id})
+
     if name == "req_start_task":
         if not (state := state_dict.get_from_connection_id(key)):
             return
         elif (first_task := state.first_task):
-            pass
-            # ToDo: send pi start_task
-            # ToDo: send php started_task
+            state.start_task(first_task)
+            props = {"task": first_task, "length": len(state.tasks)}
+            await connection_dict[key].send("start_task", props)
+            await php_server.send("started_task", props)
         else:
-            pass
-            # ToDo: send pi cannot_start_task
+            await php_server.send("cannot_start_task")
 
     if name == "req_finish_task":
         if not (state := state_dict.get_from_connection_id(key)):
@@ -145,8 +145,15 @@ async def on_message(key, name: str, props: dict):
         if 0 <= (length := state.length_to_finish):
             await asyncio.sleep(length)
 
-        # ToDo: send pi finish_task
-        # ToDo: send php finished_task
+        state.finish_task()
+
+        if (next_task := state.first_task):
+            props = {"next_task": next_task, "tasks_length": len(state.tasks)}
+        else:
+            props = {"next_task": None, "tasks_length": 0}
+
+        await connection_dict[key].send("finish_task", props)
+        await php_server.send("finished_task", props)
 
 
 async def on_message_wapper(key, data: dict):
