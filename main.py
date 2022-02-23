@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import traceback
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -63,12 +64,7 @@ async def ws_raspberry_pi(websocket: WebSocket):
         events.close.fire(key)
 
 
-async def on_message(key, data: dict):
-    print(data)
-
-    name: str = data.get("name", "")
-    props: dict = data.get("props", {})
-
+async def on_message(key, name: str, props: dict):
     if name != "ack":
         await connection_dict[key].send("ack")
 
@@ -127,4 +123,14 @@ async def on_message(key, data: dict):
         # ToDo: send pi finish_task
         # ToDo: send php finished_task
 
-events.message.add_listener(on_message)
+
+async def on_message_wapper(key, data: dict):
+    try:
+        name: str = data["name"]
+        props: dict = data.get("props", {})
+        await on_message(key, name, props)
+    except:
+        print(traceback.format_exc())
+
+
+events.message.add_listener(on_message_wapper)
